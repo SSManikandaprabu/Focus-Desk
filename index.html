@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FocusDesk – Tasks, Pomodoro & GPA for students</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#020617;--c1:#00e5e5;--c2:#0066ff;--c3:#2a1fff;--glass:rgba(15,23,42,.62);--line:rgba(96,140,255,.22);--text:#e8eefc;--muted:#8fa3cc}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Sora,system-ui,sans-serif;min-height:100vh}
+.aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.blob{position:absolute;border-radius:50%;filter:blur(100px);opacity:.55;will-change:transform}
+.b1{width:60vw;height:45vh;background:var(--c1);top:-15vh;left:20vw;animation:d1 22s ease-in-out infinite alternate}
+.b2{width:50vw;height:60vh;background:var(--c2);top:5vh;left:-10vw;animation:d2 28s ease-in-out infinite alternate}
+.b3{width:45vw;height:55vh;background:var(--c3);top:10vh;right:-10vw;animation:d3 18s ease-in-out infinite alternate}
+@keyframes d1{to{transform:translate(12vw,8vh) scale(1.2)}}
+@keyframes d2{to{transform:translate(15vw,-6vh) scale(1.15)}}
+@keyframes d3{to{transform:translate(-14vw,10vh) scale(.9)}}
+@media(prefers-reduced-motion:reduce){.blob{animation:none}}
+header{padding:28px 6vw 8px}
+h1{margin:0;font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800}
+header p{margin:6px 0 0;color:var(--muted)}
+main{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;padding:20px 6vw 60px;align-items:start}
+@media(max-width:850px){main{grid-template-columns:1fr}}
+.col{display:grid;gap:20px}
+section{background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:16px;padding:22px}
+h2{margin:0 0 14px;font-size:1.05rem;font-weight:600}
+input,button{font:inherit;color:inherit}
+input{background:rgba(2,6,23,.6);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+input:focus-visible,button:focus-visible{outline:2px solid var(--c1);outline-offset:2px}
+button{cursor:pointer;background:var(--c2);border:0;border-radius:10px;padding:10px 16px;font-weight:600}
+button:hover{background:#1a78ff}
+button.ghost{background:transparent;border:1px solid var(--line)}
+.row{display:flex;gap:8px}
+.row input{flex:1}
+ul{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
+li{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+li span{flex:1;overflow-wrap:anywhere}
+li.done span{text-decoration:line-through;color:var(--muted)}
+li button{padding:4px 10px;background:transparent;border:1px solid var(--line);color:var(--muted)}
+.empty{color:var(--muted);font-size:.9rem;margin-top:12px}
+.timer{font-size:clamp(3rem,8vw,4.4rem);font-weight:800;text-align:center;margin:6px 0 14px;font-variant-numeric:tabular-nums}
+.modes{display:flex;gap:8px;justify-content:center;margin-bottom:12px}
+.modes button[aria-pressed=true]{background:var(--c2);border-color:transparent}
+.ctrl{justify-content:center}
+.stat{text-align:center;color:var(--muted);font-size:.85rem;margin-top:12px}
+.g{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin-bottom:8px}
+.g input{width:100%}
+.gpa{font-size:2rem;font-weight:800;margin-top:12px}
+.gpa small{font-size:.85rem;font-weight:400;color:var(--muted);display:block}
+</style>
+</head>
+<body>
+<div class="aurora" aria-hidden="true"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<header>
+  <h1>FocusDesk</h1>
+  <p>Plan tasks, run focus sessions, and track your GPA. Saved in your browser.</p>
+</header>
+<main>
+  <div class="col">
+    <section aria-labelledby="t">
+      <h2 id="t">Tasks</h2>
+      <form class="row" id="taskForm">
+        <input id="taskInput" placeholder="Add a task" aria-label="Task name" required>
+        <button type="submit">Add task</button>
+      </form>
+      <ul id="tasks"></ul>
+      <p class="empty" id="taskEmpty">No tasks yet. Add your first one above.</p>
+    </section>
+    <section aria-labelledby="g">
+      <h2 id="g">GPA calculator</h2>
+      <div id="courses"></div>
+      <div class="row"><button class="ghost" id="addCourse">Add course</button></div>
+      <div class="gpa" id="gpa">0.00<small>Enter credits and grade points (0–10)</small></div>
+    </section>
+  </div>
+  <section aria-labelledby="p">
+    <h2 id="p">Focus timer</h2>
+    <div class="modes" role="group" aria-label="Timer mode">
+      <button data-min="25" aria-pressed="true">Focus 25</button>
+      <button data-min="5" aria-pressed="false">Break 5</button>
+      <button data-min="15" aria-pressed="false">Long 15</button>
+    </div>
+    <div class="timer" id="time" role="timer" aria-live="off">25:00</div>
+    <div class="row ctrl"><button id="start">Start</button><button class="ghost" id="reset">Reset</button></div>
+    <div class="stat" id="stat"></div>
+  </section>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+
+/* Tasks */
+let tasks=load('fd_tasks',[]);
+function renderTasks(){
+  const ul=$('#tasks');ul.innerHTML='';
+  tasks.forEach((t,i)=>{
+    const li=document.createElement('li');if(t.done)li.className='done';
+    const cb=document.createElement('input');cb.type='checkbox';cb.checked=t.done;cb.setAttribute('aria-label','Mark done');
+    cb.onchange=()=>{t.done=cb.checked;save('fd_tasks',tasks);renderTasks()};
+    const sp=document.createElement('span');sp.textContent=t.text;
+    const del=document.createElement('button');del.textContent='Delete';
+    del.onclick=()=>{tasks.splice(i,1);save('fd_tasks',tasks);renderTasks()};
+    li.append(cb,sp,del);ul.append(li);
+  });
+  $('#taskEmpty').hidden=tasks.length>0;
+}
+$('#taskForm').onsubmit=e=>{e.preventDefault();const v=$('#taskInput').value.trim();if(!v)return;tasks.push({text:v,done:false});$('#taskInput').value='';save('fd_tasks',tasks);renderTasks()};
+renderTasks();
+
+/* GPA */
+let courses=load('fd_courses',[{n:'',c:'',g:''}]);
+function calcGPA(){
+  let cr=0,pts=0;courses.forEach(x=>{const c=parseFloat(x.c),g=parseFloat(x.g);if(c>0&&g>=0&&g<=10){cr+=c;pts+=c*g}});
+  $('#gpa').firstChild.textContent=(cr?pts/cr:0).toFixed(2);
+}
+function renderCourses(){
+  const box=$('#courses');box.innerHTML='';
+  courses.forEach((x,i)=>{
+    const d=document.createElement('div');d.className='g';
+    [['n','Course name','text'],['c','Credits','number'],['g','Grade pt','number']].forEach(([k,ph,type])=>{
+      const inp=document.createElement('input');inp.type=type;inp.placeholder=ph;inp.setAttribute('aria-label',ph);inp.value=x[k];
+      if(type==='number'){inp.min=0;inp.step='any'}
+      inp.oninput=()=>{x[k]=inp.value;save('fd_courses',courses);calcGPA()};d.append(inp);
+    });
+    const rm=document.createElement('button');rm.className='ghost';rm.textContent='Remove';
+    rm.onclick=()=>{courses.splice(i,1);if(!courses.length)courses.push({n:'',c:'',g:''});save('fd_courses',courses);renderCourses()};
+    d.append(rm);box.append(d);
+  });calcGPA();
+}
+$('#addCourse').onclick=()=>{courses.push({n:'',c:'',g:''});renderCourses()};
+renderCourses();
+
+/* Pomodoro */
+let mins=25,left=1500,iv=null,sessions=load('fd_sessions',{d:'',n:0});
+const today=new Date().toDateString();if(sessions.d!==today)sessions={d:today,n:0};
+const fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+function draw(){$('#time').textContent=fmt(left);document.title=(iv?fmt(left)+' · ':'')+'FocusDesk';$('#stat').textContent=`Focus sessions today: ${sessions.n}`}
+function stop(){clearInterval(iv);iv=null;$('#start').textContent='Start'}
+$('#start').onclick=()=>{
+  if(iv){stop();draw();return}
+  $('#start').textContent='Pause';
+  iv=setInterval(()=>{
+    left--;
+    if(left<=0){stop();left=0;if(mins===25){sessions.n++;save('fd_sessions',sessions)}
+      try{new AudioContext().createOscillator()}catch{};alert('Time is up!');left=mins*60}
+    draw();
+  },1000);
+};
+$('#reset').onclick=()=>{stop();left=mins*60;draw()};
+document.querySelectorAll('.modes button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.modes button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  mins=+b.dataset.min;stop();left=mins*60;draw();
+});
+draw();
+</script>
+</body>
+</html>
